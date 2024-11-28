@@ -1,62 +1,26 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+
   ECSCluster:
     Type: AWS::ECS::Cluster
-    Properties:
-      ClusterName: MyECSCluster
 
-  ECSExecutionRole:
-    Type: AWS::IAM::Role
+  RDSInstance:
+    Type: AWS::RDS::DBInstance
     Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: ecs-tasks.amazonaws.com
-            Action: sts:AssumeRole
-      Path: "/"
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
-
-  TaskDefinition:
-    Type: AWS::ECS::TaskDefinition
-    Properties:
-      Family: MyTaskDefinition
-      Cpu: "256"
-      Memory: "512"
-      NetworkMode: awsvpc
-      ExecutionRoleArn: !GetAtt ECSExecutionRole.Arn
-      ContainerDefinitions:
-        - Name: my-container
-          Image: nginx:latest
-          Essential: true
-          PortMappings:
-            - ContainerPort: 80
-              Protocol: tcp
-
-  ECSService:
-    Type: AWS::ECS::Service
-    Properties:
-      Cluster: !Ref ECSCluster
-      DesiredCount: 1
-      LaunchType: FARGATE
-      TaskDefinition: !Ref TaskDefinition
-      NetworkConfiguration:
-        AwsvpcConfiguration:
-          AssignPublicIp: ENABLED
-          SecurityGroups:
-            - !GetAtt SecurityGroup.GroupId
-          Subnets:
-            - subnet-12345678
-
-  SecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Allow HTTP traffic
-      VpcId: vpc-12345678
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: 0.0.0.0/0
+      AllocatedStorage: 20
+      DBInstanceClass: db.t3.micro
+      Engine: mysql
+      MasterUsername: admin
+      MasterUserPassword: password123
